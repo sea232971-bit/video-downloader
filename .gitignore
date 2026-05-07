@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Buildozer
+.buildozer/
+bin/
+
+# IDE
+.vscode/
+.idea/
+
+# Config (可能含隐私 Cookie)
+config.json
+mobile_config.json
+
+# 系统
+*.log
+*.tmp
+Thumbs.db

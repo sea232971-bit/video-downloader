@@ -1,0 +1,62 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:  # 手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Prepare source (use Kivy entry point)
+        run: |
+          cp main.py main_desktop.py.bak
+          cp mobile_app.py main.py
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf automake libtool libtool-bin \
+            libltdl-dev libffi-dev libssl-dev \
+            libncurses5-dev libncursesw5-dev \
+            libtinfo5 cmake libz-dev \
+            openjdk-17-jdk-headless \
+            git zip unzip \
+            python3-pip python3-dev \
+            libgles2-mesa-dev libegl1-mesa-dev \
+            libmtdev-dev libxkbcommon-dev
+
+      - name: Install Buildozer
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install buildozer cython
+
+      - name: Build APK
+        run: |
+          buildozer android debug 2>&1 | tee build.log
+        timeout-minutes: 60
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-downloader-apk
+          path: bin/*.apk
+          retention-days: 30
+
+      - name: Upload build log (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          retention-days: 7
