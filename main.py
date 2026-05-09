@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-视频下载工具 — 支持抖音/Twitter(X)/YouTube/Bilibili/Instagram/小红书等平台
+视频下载工具 v3.1 — 支持抖音/Twitter(X)/YouTube/Bilibili/Instagram/小红书等平台
 支持无水印下载、批量下载、画质选择、音频提取
 """
 
@@ -19,6 +19,13 @@ from pathlib import Path
 from datetime import datetime
 
 import requests
+
+# ── 全局 HTTP Session（trust_env=False 防止读取系统/环境代理）──
+def _http_session():
+    """创建不读取系统代理和环境变量的 requests Session"""
+    s = requests.Session()
+    s.trust_env = False
+    return s
 
 # 解决 Windows 终端编码问题
 if sys.platform == 'win32':
@@ -203,7 +210,7 @@ def parse_twitter_video(url: str) -> dict | None:
 
     # ── 策略1: fxtwitter API（无需登录，最可靠）──
     try:
-        resp = requests.get(
+        resp = _http_session().get(
             f'https://api.fxtwitter.com/status/{tweet_id}',
             headers={'User-Agent': 'Mozilla/5.0 (compatible; VideoDownloader/2.0)'},
             timeout=15,
@@ -268,7 +275,7 @@ def parse_twitter_video(url: str) -> dict | None:
     try:
         num = (int(tweet_id) / 1e15) * math.pi
         token = js_number_to_string(num, 36).translate(str.maketrans('', '', '.0'))
-        resp = requests.get(
+        resp = _http_session().get(
             'https://cdn.syndication.twimg.com/tweet-result',
             headers={'User-Agent': 'Googlebot'},
             params={'id': tweet_id, 'lang': 'en', 'token': token},
@@ -345,7 +352,7 @@ def _fetch_douyin_tokens(on_log=None) -> dict | None:
     # 获取 ttwid
     for attempt in range(2):
         try:
-            resp = requests.get(
+            resp = _http_session().get(
                 'https://api.douyin.wtf/api/douyin/web/generate_ttwid',
                 headers={'User-Agent': _DOUYIN_UA, 'Accept': 'application/json'},
                 timeout=15,
@@ -368,7 +375,7 @@ def _fetch_douyin_tokens(on_log=None) -> dict | None:
     # 获取 msToken
     for attempt in range(2):
         try:
-            resp = requests.get(
+            resp = _http_session().get(
                 'https://api.douyin.wtf/api/douyin/web/generate_real_msToken',
                 headers={'User-Agent': _DOUYIN_UA, 'Accept': 'application/json'},
                 timeout=15,
@@ -411,7 +418,7 @@ def _write_douyin_cookie_file(tokens: dict) -> str | None:
 def _resolve_douyin_short(url: str) -> str | None:
     """将 douyin 短链接还原为完整链接（HEAD 跟踪 HTTP 重定向 → GET 提取 HTML 跳转）"""
     try:
-        resp = requests.head(url, headers={'User-Agent': _DOUYIN_UA},
+        resp = _http_session().head(url, headers={'User-Agent': _DOUYIN_UA},
                             allow_redirects=True, timeout=10)
         if resp.url != url and 'douyin.com' in resp.url:
             return resp.url
@@ -420,7 +427,7 @@ def _resolve_douyin_short(url: str) -> str | None:
 
     # HEAD 未重定向时，用 GET 从 HTML 中提取目标链接
     try:
-        resp = requests.get(url, headers={'User-Agent': _DOUYIN_UA},
+        resp = _http_session().get(url, headers={'User-Agent': _DOUYIN_UA},
                            allow_redirects=True, timeout=10)
         if resp.url != url and 'douyin.com' in resp.url:
             return resp.url
@@ -489,7 +496,7 @@ def parse_douyin_video(url: str, on_log=None) -> dict | None:
 
     a_bogus = None
     try:
-        resp = requests.get(
+        resp = _http_session().get(
             'https://api.douyin.wtf/api/douyin/web/generate_a_bogus',
             params={'url': douyin_api, 'user_agent': _DOUYIN_UA},
             headers={'User-Agent': _DOUYIN_UA, 'Accept': 'application/json'},
@@ -516,7 +523,7 @@ def parse_douyin_video(url: str, on_log=None) -> dict | None:
                 'Referer': 'https://www.douyin.com/',
                 'Accept': 'application/json',
             }
-            resp = requests.get(full_url, headers=headers, cookies=cookies, timeout=20)
+            resp = _http_session().get(full_url, headers=headers, cookies=cookies, timeout=20)
             if resp.status_code == 200 and resp.text.strip():
                 data = resp.json()
                 break
@@ -753,7 +760,6 @@ class VideoDownloader:
             'progress_hooks': [self._progress_hook],
             'quiet': True,
             'no_warnings': True,
-            'ignoreerrors': True,
             'retries': 5,
             'fragment_retries': 5,
             'extract_flat': False,
@@ -777,9 +783,8 @@ class VideoDownloader:
         elif cookie_file and os.path.isfile(cookie_file):
             opts['cookiefile'] = cookie_file
 
-        # Proxy
-        if proxy:
-            opts['proxy'] = proxy
+        # 始终显式设置代理 — 无代理时空字符串阻止 yt-dlp 读取系统/环境代理
+        opts['proxy'] = proxy if proxy else ''
 
         # FFmpeg 路径
         ffmpeg_path = find_ffmpeg()
@@ -874,9 +879,13 @@ class VideoDownloader:
                               'Chrome/120.0.0.0 Safari/537.36',
                 'Referer': referer or 'https://www.google.com/',
             }
-            proxies = {'http': proxy, 'https': proxy} if proxy else None
-            resp = requests.get(url, headers=headers, cookies=cookies,
-                                proxies=proxies, stream=True, timeout=30)
+            # 代理: 始终显式设置，避免 requests 自动读取系统/环境变量代理
+            session = requests.Session()
+            session.trust_env = False  # 禁止读取系统代理和环境变量(HTTP_PROXY等)
+            if proxy:
+                session.proxies = {'http': proxy, 'https': proxy}
+            resp = session.get(url, headers=headers, cookies=cookies,
+                               stream=True, timeout=30)
             if resp.status_code != 200:
                 return None
             total = int(resp.headers.get('content-length', 0))
@@ -1260,7 +1269,7 @@ class Application:
         self.root = root
         self.cfg = load_config()
 
-        self.root.title('视频下载工具 v2.0')
+        self.root.title('视频下载工具 v3.0')
         w = self.cfg.get('window_width', 820)
         h = self.cfg.get('window_height', 780)
         self.root.geometry(f'{w}x{h}')
@@ -1504,9 +1513,13 @@ class Application:
             pass
 
     def _browse(self):
-        path = filedialog.askdirectory(title='选择保存目录')
+        current = self.save_path.get().strip()
+        initial = current if (current and os.path.isdir(current)) else str(Path.home() / 'Downloads')
+        path = filedialog.askdirectory(title='选择保存目录', initialdir=initial)
         if path:
             self.save_path.set(path)
+            self.cfg['save_path'] = path
+            save_config(self.cfg)
 
     def _open_folder(self):
         path = self.save_path.get().strip()
