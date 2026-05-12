@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,7 +28,8 @@ jobs:
           sudo apt-get install -y \
             autoconf automake libtool libtool-bin \
             libltdl-dev libffi-dev libssl-dev \
-            libncurses-dev libtinfo-dev cmake zlib1g-dev \
+            libncurses5-dev libncursesw5-dev \
+            libtinfo5 cmake libz-dev \
             openjdk-17-jdk \
             git zip unzip \
             python3-pip python3-dev \
@@ -52,20 +53,6 @@ jobs:
           echo "=== Build log (last 150 lines) ==="
           tail -n 150 build.log 2>/dev/null || echo "build.log not found"
           echo "=== End of log ==="
-
-      - name: Debug - find APK files
-        if: always()
-        run: |
-          echo "=== Java version ==="
-          java -version 2>&1 || echo "java not found"
-          echo "=== Python version ==="
-          python --version
-          echo "=== Searching for APK files ==="
-          find . -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
-          echo "=== Contents of bin/ ==="
-          ls -la bin/ 2>/dev/null || echo "bin/ directory not found"
-          echo "=== Contents of .buildozer/ ==="
-          ls -la .buildozer/ 2>/dev/null || echo ".buildozer/ not found"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

@@ -9,7 +9,7 @@ version = 3.1
 version.code = 3
 
 # 依赖 (python-for-android 会编译这些)
-requirements = python3,kivy>=2.1.0,yt-dlp,requests,urllib3,certifi,charset-normalizer,idna,android
+requirements = python3,kivy>=2.1.0,yt-dlp,requests
 
 # 仅打包 64 位 (现代手机都支持)
 android.arch = arm64-v8a
@@ -33,7 +33,7 @@ log_level = 1
 warn_on_root = 1
 
 # p4a 配置
-p4a.branch = master
+p4a.branch = develop
 p4a.bootstrap = sdl2
 p4a.hook = kivy
 
