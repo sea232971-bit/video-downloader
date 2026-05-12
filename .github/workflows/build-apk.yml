@@ -42,8 +42,19 @@ jobs:
 
       - name: Build APK
         run: |
+          set -o pipefail
           buildozer android debug 2>&1 | tee build.log
         timeout-minutes: 60
+
+      - name: Debug - find APK files
+        if: always()
+        run: |
+          echo "=== Searching for APK files ==="
+          find . -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
+          echo "=== Contents of bin/ ==="
+          ls -la bin/ 2>/dev/null || echo "bin/ directory not found"
+          echo "=== Build directory ==="
+          ls -la .buildozer/ 2>/dev/null || echo ".buildozer/ not found"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -52,8 +63,8 @@ jobs:
           path: bin/*.apk
           retention-days: 30
 
-      - name: Upload build log (on failure)
-        if: failure()
+      - name: Upload build log
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-log
