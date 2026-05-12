@@ -28,8 +28,7 @@ jobs:
           sudo apt-get install -y \
             autoconf automake libtool libtool-bin \
             libltdl-dev libffi-dev libssl-dev \
-            libncurses5-dev libncursesw5-dev \
-            libtinfo5 cmake libz-dev \
+            libncurses-dev libtinfo-dev cmake zlib1g-dev \
             openjdk-17-jdk-headless \
             git zip unzip \
             python3-pip python3-dev \
