@@ -27,6 +27,22 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Cache Buildozer dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.buildozer/android/platform
+            .buildozer/android/platform
+          key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+          restore-keys: |
+            buildozer-${{ runner.os }}-
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -40,7 +56,7 @@ jobs:
             libgles2-mesa-dev libegl1-mesa-dev \
             libmtdev-dev libxkbcommon-dev
 
-      - name: Install Buildozer & Cython
+      - name: Install Buildozer
         run: |
           pip install --upgrade pip setuptools wheel
           pip install buildozer cython==0.29.33
@@ -49,7 +65,14 @@ jobs:
         run: |
           set -o pipefail
           yes | buildozer -v android debug 2>&1 | tee build.log
-        timeout-minutes: 60
+        timeout-minutes: 90
+
+      - name: Restore original main.py
+        if: always()
+        run: |
+          if [ -f main_desktop.py.bak ]; then
+            mv main_desktop.py.bak main.py
+          fi
 
       - name: Print build log tail on failure
         if: failure()
