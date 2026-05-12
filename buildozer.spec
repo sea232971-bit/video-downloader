@@ -8,11 +8,13 @@ source.include_exts = py,png,jpg,kv,atlas,json,txt
 version = 3.1
 version.code = 3
 
-requirements = python3,kivy,yt-dlp,requests
+requirements = python3==3.10.12,kivy==2.3.0,yt-dlp,requests
 
 android.arch = arm64-v8a
 android.api = 33
 android.minapi = 26
+android.ndk = 25b
+android.sdk = 33
 android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
 
 orientation = portrait
