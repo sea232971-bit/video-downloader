@@ -29,7 +29,7 @@ jobs:
             autoconf automake libtool libtool-bin \
             libltdl-dev libffi-dev libssl-dev \
             libncurses-dev libtinfo-dev cmake zlib1g-dev \
-            openjdk-17-jdk-headless \
+            openjdk-17-jdk \
             git zip unzip \
             python3-pip python3-dev \
             libgles2-mesa-dev libegl1-mesa-dev \
@@ -46,14 +46,25 @@ jobs:
           buildozer android debug 2>&1 | tee build.log
         timeout-minutes: 60
 
+      - name: Debug - print build log on failure
+        if: failure()
+        run: |
+          echo "=== Build log (last 150 lines) ==="
+          tail -n 150 build.log 2>/dev/null || echo "build.log not found"
+          echo "=== End of log ==="
+
       - name: Debug - find APK files
         if: always()
         run: |
+          echo "=== Java version ==="
+          java -version 2>&1 || echo "java not found"
+          echo "=== Python version ==="
+          python --version
           echo "=== Searching for APK files ==="
           find . -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
           echo "=== Contents of bin/ ==="
           ls -la bin/ 2>/dev/null || echo "bin/ directory not found"
-          echo "=== Build directory ==="
+          echo "=== Contents of .buildozer/ ==="
           ls -la .buildozer/ 2>/dev/null || echo ".buildozer/ not found"
 
       - name: Upload APK
