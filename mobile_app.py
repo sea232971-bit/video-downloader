@@ -49,6 +49,7 @@ from kivy.uix.popup import Popup
 from kivy.clock import Clock
 from kivy.utils import platform
 from kivy.properties import StringProperty
+from kivy.lang import Builder
 
 # ── 平台判断 ──────────────────────────────────────────
 IS_ANDROID = platform == 'android'
@@ -1195,6 +1196,8 @@ KV_STRING = '''
             valign: 'top'
             halign: 'left'
 '''
+
+Builder.load_string(KV_STRING)
 
 
 class RootWidget(BoxLayout):
