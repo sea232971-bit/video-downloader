@@ -5,8 +5,8 @@ package.domain = com.videodl
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json,txt
 
-version = 2.0
-version.code = 2
+version = 3.1
+version.code = 3
 
 # 依赖 (python-for-android 会编译这些)
 requirements = python3,kivy>=2.1.0,yt-dlp,requests,urllib3,certifi,charset-normalizer,idna,android
