@@ -3,7 +3,7 @@ title = 视频下载工具
 package.name = videodownloader
 package.domain = com.videodl
 source.dir = .
-source.include_exts = py,png,jpg,kv,atlas,json,txt
+source.include_exts = py,png,jpg,kv,atlas,json,txt,ttc
 source.exclude_dirs = .git,__pycache__,.claude,.github,build,dist,.buildozer,bin
 
 version = 3.1

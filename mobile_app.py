@@ -37,6 +37,7 @@ except ImportError:
     pass
 
 from kivy.app import App
+from kivy.core.text import LabelBase
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.label import Label
@@ -50,6 +51,12 @@ from kivy.clock import Clock
 from kivy.utils import platform
 from kivy.properties import StringProperty
 from kivy.lang import Builder
+
+# ── 注册中文字体 ─────────────────────────────────────
+FONT_FILE = str(Path(__file__).parent / 'chinese_font.ttc')
+if os.path.exists(FONT_FILE):
+    LabelBase.register('Roboto', FONT_FILE)
+    LabelBase.register('DroidSans', FONT_FILE)
 
 # ── 平台判断 ──────────────────────────────────────────
 IS_ANDROID = platform == 'android'
