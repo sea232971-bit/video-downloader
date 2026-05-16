@@ -729,9 +729,9 @@ class VideoDownloader:
         self._speed_samples = []
         try:
             headers = {
-                'User-Agent': 'Mozilla/5.0 (Linux; Android 10; Pixel 3) '
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
                               'AppleWebKit/537.36 (KHTML, like Gecko) '
-                              'Chrome/120.0.0.0 Mobile Safari/537.36',
+                              'Chrome/120.0.0.0 Safari/537.36',
                 'Referer': referer or 'https://www.google.com/',
             }
             session = _http_session()
@@ -1089,10 +1089,10 @@ KV_STRING = '''
             write_tab: False
             on_text_validate: root.start_download()
         Button:
-            text: '📋'
+            text: '粘贴'
             size_hint_x: None
-            width: dp(56)
-            font_size: dp(20)
+            width: dp(72)
+            font_size: dp(16)
             on_release: root.paste_clipboard()
 
     # ── 设置行 ──
@@ -1133,18 +1133,18 @@ KV_STRING = '''
         height: dp(34)
         spacing: dp(6)
         Label:
-            text: '保存:'
+            text: '保存到:'
             size_hint_x: None
-            width: dp(48)
+            width: dp(60)
             font_size: dp(13)
             color: 0.5, 0.5, 0.5, 1
         Label:
             id: save_path_label
-            text: root.save_path
+            text: root.short_save_path
             font_size: dp(13)
-            color: 0.5, 0.5, 0.5, 1
+            color: 0.3, 0.6, 0.9, 1
             halign: 'left'
-            text_size: self.size
+            text_size: self.width, self.height
             shorten: True
 
     # ── 下载按钮 ──
@@ -1209,11 +1209,13 @@ Builder.load_string(KV_STRING)
 
 class RootWidget(BoxLayout):
     save_path = StringProperty(DEFAULT_SAVE_PATH)
+    short_save_path = StringProperty('')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.cfg = load_config()
         self.save_path = self.cfg.get('save_path', DEFAULT_SAVE_PATH)
+        self._update_short_path()
         self.downloading = False
         self.downloader = None
         self.batch_downloader = None
@@ -1225,6 +1227,15 @@ class RootWidget(BoxLayout):
             pass
 
         self.ids.url_input.bind(text=self.on_url_change)
+
+    def _update_short_path(self):
+        """生成简短可读的保存路径（仅显示最后两级目录）"""
+        p = self.save_path.replace('\\', '/')
+        parts = p.rstrip('/').split('/')
+        if len(parts) >= 3:
+            self.short_save_path = '.../' + '/'.join(parts[-2:])
+        else:
+            self.short_save_path = p
 
     def paste_clipboard(self):
         try:
@@ -1261,11 +1272,8 @@ class RootWidget(BoxLayout):
 
     def _get_urls(self):
         text = self.ids.url_input.text.strip()
-        urls = []
-        for line in text.splitlines():
-            line = line.strip()
-            if line and line.startswith(('http://', 'https://')):
-                urls.append(line)
+        # 用正则从文本中提取所有 URL（支持分享文本中夹杂的链接）
+        urls = re.findall(r'https?://[^\s]+', text)
         return urls
 
     def update_progress(self, info):
