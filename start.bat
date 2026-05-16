@@ -1,9 +1,8 @@
 @echo off
-chcp 65001 >nul
-title 视频下载工具
+title Video Downloader
 cd /d "%~dp0"
 
-:: 查找 Python（py 启动器最可靠）
+:: Find Python
 set PYTHON=
 for %%p in (py python python3) do (
     where %%p >nul 2>nul
@@ -13,7 +12,7 @@ for %%p in (py python python3) do (
     )
 )
 
-:: 尝试常见路径
+:: Try common install paths
 for %%d in (
     "C:\Python311" "C:\Python310" "C:\Python3"
     "%LOCALAPPDATA%\Programs\Python\Python311"
@@ -26,18 +25,18 @@ for %%d in (
     )
 )
 
-echo [错误] 未找到 Python，请安装后重试
-echo 下载地址: https://www.python.org/downloads/
+echo [ERROR] Python not found. Please install Python first:
+echo https://www.python.org/downloads/
 pause
 exit /b 1
 
 :found
-echo 正在启动视频下载工具...
+echo Starting video downloader...
 %PYTHON% main.py
 if errorlevel 1 (
     echo.
     echo ========================================
-    echo 启动失败，请检查依赖是否安装:
+    echo Startup failed. Please install dependencies:
     echo   pip install -r requirements.txt
     echo ========================================
     pause
