@@ -83,7 +83,7 @@ jobs:
           echo "sdl2_image clone line:"
           grep 'clone_path' pythonforandroid/recipes/sdl2_image/__init__.py
 
-          cd ../../..
+          cd $GITHUB_WORKSPACE
           echo "=== Buildozer starting ==="
           yes | buildozer -v android debug 2>&1 | tee build.log
         timeout-minutes: 90
